@@ -1,0 +1,613 @@
+# sudokumazaka
+#sudoku game where u can both solve sudokus or ask me to solve them
+# Hello World program in Python
+#                             SAIRAM
+
+
+#SUDOKUGAME    #CSPROJECT2021
+import sys 
+import pygame as py
+import time
+from pygame import mixer
+import random
+mixer.init()
+py.init()
+from pygame.locals import *
+screensize= 880,680       #1356,728 full screen resolution approx.
+screen = py.display.set_mode((screensize), RESIZABLE )
+py.display.set_caption('Sudoku SOLVER')
+
+bg1=py.image.load('C:/Users/KASYAP/gamebg1.jpg')
+bg2=py.image.load('C:/Users/KASYAP/gamebg2.jpg')
+bgo=py.image.load('C:/Users/KASYAP/gamebg2.jpg')
+solved=py.image.load('C:/Users/KASYAP/solved.png')
+
+py.font.init()
+font1= py.font.SysFont('Comic Sans MS', 30)
+
+grid=[
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ]
+
+class button():
+    def __init__(self, color, x,y,width,height, text):
+        self.color = color
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.text = text
+
+    def draw(self,screen,outline=2):
+        #Call this method to draw the button on the screen
+        self.mpos=py.mouse.get_pos()
+        
+        if self.x < self.mpos[0] < self.x + self.width    and self.y < self.mpos[1] < self.height + self.y :
+            tra=(150,150,150)
+        else:
+            tra=1
+        py.draw.rect(screen, tra , (self.x,self.y,self.width,self.height),outline)
+        
+        if self.text :
+            text = font1.render(self.text, 1, self.color)
+            screen.blit(text, (self.x + (self.width/2 - text.get_width()/2), self.y + (self.height/2 - text.get_height()/2)))
+
+    def isOver(self, pos):
+        if pos[0] > self.x and pos[0] < self.x + self.width:
+            if pos[1] > self.y and pos[1] < self.y + self.height:
+                return True
+            
+        return False
+
+def blit_text(surface, text, pos, font, color):
+    words = text.split()  
+    space = font1.size(' ')[0]  # The width of a space.
+    max_width, max_height = surface.get_size()
+    x, y = pos
+    for word in words:
+        word_surface = font1.render(word, False,(0,0,0))
+        word_width, word_height = word_surface.get_size()
+        if x + word_width >= max_width:
+            x = pos[0]  # Reset the x.
+            y += word_height  # Start on new row.
+        surface.blit(word_surface, (x, y))
+        x += word_width + space
+
+
+def draw_bg():
+    py.draw.rect(screen , py.Color('black') , py.Rect(15,15,630,630),10)
+    i=1
+    while (i*70) < 630:
+        line_width = 5 if i%3>0 else 10
+        py.draw.line(screen,py.Color('black'), py.Vector2(( i*70)+15,15),py.Vector2((i*70)+15,645),line_width)
+        py.draw.line(screen,py.Color('black'), py.Vector2(15,( i*70)+15),py.Vector2(645,(i*70)+15),line_width)
+        i+=1
+
+def draw_num():
+    row=0
+    offset=35
+    while row<9:
+        col=0
+        while col<9:
+            n=grid[row][col]
+            if n!=0:
+                num_text=font1.render(str(n), True,py.Color('white'))
+                screen.blit(num_text, py.Vector2((col*70)+offset+6,(row*70)+offset-4))
+
+            col+=1
+        row+=1
+
+def get_box(pos):
+    i=j=15
+    a=b=1
+
+    while i<595 :
+        if i<pos[0]<i+70:
+            c=a
+            break 
+        else:
+            i=i+70;a+=1
+    else:
+        return False,False
+
+    while j<595:
+        if j<pos[1]<j+70:
+            d=b
+            break
+        else:
+            j+=70;b+=1
+    else:
+        return False,False
+    return d,c
+
+def highlight(s):
+    a=15+((s[1]-1)*70); b= 15+((s[0]-1)*70)
+    c=d=70
+    py.draw.rect(screen,(255,0,0),py.Rect(a,b,c,d),5)
+    return a,b,c,d
+
+
+def grid_input(s,i):
+    grid[s[0]-1][s[1]-1]=i
+
+
+def solvebutton():
+    #print('enter button')
+    mixer.music.load('C:/Users/KASYAP/OneDrive/Desktop/SUDOKU Game 2021/solved.mp3')
+    mixer.music.set_volume(0.9)
+    mixer.music.play()
+    solveSudoku(grid)
+    draw_num()
+
+
+def solveSudoku(grid, i=0, j=0):
+        i,j = findNextCellToFill(grid, i, j)
+        if i == -1:
+                return True
+        for e in range(1,10):
+                if isValid(grid,i,j,e):
+                        grid[i][j] = e
+                        if solveSudoku(grid, i, j):
+                                return True
+                        else:
+                            grid[i][j] = 0 # Undo the current cell for backtracking
+        return False
+
+def isValid(grid, i, j, e):
+        rowOk = all([e != grid[i][x] for x in range(9)])
+        if rowOk:
+                columnOk = all([e != grid[x][j] for x in range(9)])
+                if columnOk:
+                        # finding the top left x,y co-ordinates of the section containing the i,j cell
+                        secTopX, secTopY = 3 *(i//3), 3 *(j//3) #floored quotient should be used here. 
+                        for x in range(secTopX, secTopX+3):
+                                for y in range(secTopY, secTopY+3):
+                                        if grid[x][y] == e:
+                                                return False
+                        return True
+        return False
+
+def findNextCellToFill(grid, i, j):
+        for x in range(i,9):
+                for y in range(j,9):
+                        if grid[x][y] == 0:
+                                return x,y
+        for x in range(0,9):
+                for y in range(0,9):
+                        if grid[x][y] == 0:
+                                return x,y
+        return -1,-1
+
+def get_BoxL(s):
+    S=[0,0]
+    S[0],S[1]=s[0],s[1]-1
+    return S
+   
+def get_BoxR(s):
+    S=[0,0]
+    S[0],S[1]=s[0],s[1]+1
+    return S
+    
+def get_BoxU(s):
+    S=[0,0]
+    S[0],S[1]=s[0]-1,s[1]
+    return S
+def get_BoxD(s):
+    S=[0,0]
+    S[0],S[1]=s[0]+1,s[1]
+    return S
+
+mixer.music.load('C:/Users/KASYAP/OneDrive/Desktop/SUDOKU Game 2021/bgm1.mp3')
+mixer.music.set_volume(0.7)
+#mixer.music.play(-1)
+
+intial=True
+gameon=False
+Gameon=False
+
+introtext = font1.render(" Hi! Hello This is Kasyap welcome to my 'SUDOKU Game'", True ,(250,0,0))
+introtextRect = introtext.get_rect()
+introtextRect.topleft = (0,screensize[1]// 2)
+
+swamitext = font1.render('END OF KNOWLEDGE IS LOVE',True,(255,255,255),(255,155,0))
+stextRect = swamitext.get_rect()
+stextRect.center = (screensize[0]//2,30)
+
+while intial :
+    screen.blit(bg1,(0,0))
+    screen.blit(swamitext,stextRect)
+    screen.blit(introtext, introtextRect)
+    one=button(py.Color('brown'),screensize[0]/2,170,300,40,'give a puzzle to solve')
+    two=button(py.Color('brown'),screensize[0]/2,screensize[1]-100,300,40,'ask a puzzle to solve')
+    one.draw(screen)
+    two.draw(screen)
+    for event in py.event.get():
+        if event.type == QUIT :
+            py.quit()
+            sys.exit()
+            
+        if event.type == py.MOUSEBUTTONUP  :#start
+            pos = py.mouse.get_pos()
+            a=one.isOver(pos)
+            c=two.isOver(pos)
+
+    try :
+        if a :
+            gameon=True
+            intial=False
+            del a
+            del one
+
+    except NameError:
+        pass
+
+    try :
+        if c :
+            intial =False
+            Gameon=True
+            del c
+            del two
+    except NameError :
+        pass
+
+
+
+    py.display.flip()
+
+
+
+
+b=0
+while gameon:
+    screen.blit(bg2,(0,0))
+    screen.fill((255,255,255))
+    in1='Here,we have a sudoku solver. This takes input and solves the puzzle'
+    blit_text(screen,in1,(20,400),font1,(0,0,0))
+    start=button(py.Color('brown'),(screensize[0]/2)-80,(screensize[1]/2)-80,200,40,'start') #screensize
+    start.draw(screen,1)
+
+
+        
+
+    for event in py.event.get():
+
+        if event.type == QUIT :
+            py.quit()
+            sys.exit()
+        if event.type == py.MOUSEBUTTONUP and b==0 :#start
+            pos = py.mouse.get_pos()
+            a=start.isOver( pos)
+            #b=1
+                     
+            
+        if event.type == py.MOUSEBUTTONUP and b==1: #taking and highligting 
+            pos= py.mouse.get_pos()
+            s=get_box(pos)
+            
+        if event.type == py.MOUSEBUTTONUP : #solve 
+            pos= py.mouse.get_pos()
+            try:
+                solvechk=solve.isOver(pos)
+            except NameError:
+                pass
+
+
+            
+        if event.type == py.KEYDOWN:   #input
+            if event.key == py.K_1 :
+                key=1
+            if event.key == py.K_2 :
+                key=2
+            if event.key == py.K_3 :
+                key=3
+            if event.key == py.K_4 :
+                key=4
+            if event.key == py.K_5 :
+                key=5
+            if event.key == py.K_6 :
+                key=6
+            if event.key == py.K_7 :
+                key=7
+            if event.key == py.K_8 :
+                key=8
+            if event.key == py.K_9 :
+                key=9
+            if event.key == py.K_DELETE :
+                key=0
+            if event.key == py.K_KP_ENTER:  
+                solvebutton()
+
+            if event.key == py.K_UP and b==1:
+                s=tuple(get_BoxU(s))
+                
+            if event.key == py.K_RIGHT and b==1:
+                s=tuple(get_BoxR(s))
+                
+            if event.key == py.K_LEFT and b==1:
+                s=tuple(get_BoxL(s))
+                
+            if event.key == py.K_DOWN and b==1:
+                s=tuple(get_BoxD(s))
+
+    try :
+        if solvechk:
+            solvebutton()
+            
+    except NameError:
+        pass
+
+    try :
+        if a :
+            screen.fill((255,165,0))
+            draw_bg();draw_num()
+            solve=button(py.Color('brown'),660,300,200,80,'solve')
+            solve.draw(screen)
+            b=1
+            del start
+            
+
+    except NameError:
+        pass
+    
+    try :
+        if b==1:
+            if s[0] != False and s[1]!= False :
+                highlight(s)
+                if isValid(grid,s[0]-1,s[1]-1,key) or key==0 :
+                    grid_input(s,key)
+                    mixer.music.load('C:/Users/KASYAP/OneDrive/Desktop/SUDOKU Game 2021/beep.mp3')
+                    mixer.music.set_volume(0.9)
+                    mixer.music.play()
+                    if key==0:
+                        py.draw.rect(screen,(255,165,0),py.Rect(15+((s[1]-1)*70),15+((s[0]-1)*70),70,70))
+
+                    del key
+                else:
+                    popup = font1.render('invalid entry', True, (200,200,200))
+                    popupRect = popup.get_rect()
+                    popupRect.topright = ( screensize[0]-15,200 )
+                    screen.blit(popup, popupRect )
+        
+        
+    except NameError:
+        pass
+
+    draw_num()
+
+    py.display.flip()
+
+del b
+
+b=0
+
+def getrandind(grid,level):
+    l=[]
+    if level == 'e' :  #15 numbers
+        for k in range(45):
+            i=random.randint(1,9)
+            j=random.randint(1,9)
+            if (i,j) not in l:
+                l.append((i,j))
+
+    if level == 'm' :   #12 numbers
+        for k in range(35):
+            i=random.randint(1,9)
+            j=random.randint(1,9)
+            if (i,j) not in l:
+                l.append((i,j))
+
+    if level == 'h' :   #10 numbers
+        for k in range(25):
+            i=random.randint(1,9)
+            j=random.randint(1,9)
+            if (i,j) not in l:
+                l.append((i,j))
+    return l
+
+def gtcrctvalfrrandind(g,l) :    #isValid(grid, i, j, e):
+    L=len(l)
+    for i in range(L):
+        e=random.randint(1,9)
+        if isValid(g,l[i][0]-1,l[i][1]-1,e):
+            g[l[i][0]-1][l[i][1]-1]=e
+
+def format_time(secs):
+    sec = secs%60
+    minute = secs//60
+    hour = minute//60
+
+    mat = " " + str(minute) + ":" + str(sec)
+    return mat
+
+def chksolved(grid):
+    for i in range(9):
+        for j in range(9):
+            if grid[i][j] != 0 :
+                pass
+            elif grid[i][j]==0:
+                return False
+    else:
+        return True
+
+TIME=0
+
+while Gameon:                                       #color, x,y,width,height, text
+    screen.blit(bgo,(0,0))
+    easy=button(py.Color('black'),screensize[0]/2-50,150,150,50,'easy')
+    medium=button(py.Color('black'),screensize[0]/2-50,250,150,50,'medium')
+    hard=button(py.Color('black'),screensize[0]/2-50,350,150,50,'hard')
+    easy.draw(screen)
+    medium.draw(screen)
+    hard.draw(screen)
+
+    if chksolved(grid):
+        Time=None
+        popup = font1.render('congratulatons,press q to quit', True, (200,200,200))
+        popupRect = popup.get_rect()
+        popupRect.topright = ( screensize[0]-15,200 )
+        screen.blit(popup, popupRect)
+
+    
+    for event in py.event.get():
+        if event.type == QUIT :
+            py.quit()
+            sys.exit()
+        if event.type == py.MOUSEBUTTONUP and b==0  : #full for hard,easy,medium buttons
+            pos = py.mouse.get_pos()
+            e=easy.isOver(pos)
+            if e :
+                le=getrandind(grid,'e')
+                gtcrctvalfrrandind(grid,le)
+            m=medium.isOver(pos)
+            if m:
+                lm=getrandind(grid,'m')
+                gtcrctvalfrrandind(grid,lm)
+            h=hard.isOver(pos)
+            if h :
+                lh=getrandind(grid,'h')
+                gtcrctvalfrrandind(grid,lh)
+
+    
+    
+        if event.type == py.MOUSEBUTTONUP and b==1: #taking and highligting 
+            pos= py.mouse.get_pos()
+            s=get_box(pos)
+            TIME=1 #'ent'
+            
+        if event.type == py.MOUSEBUTTONUP : #solve 
+            pos= py.mouse.get_pos()
+            if TIME != 1 : #'ent':
+                starttime=time.time()
+            try:
+                solvechk=giveup.isOver(pos)
+            except NameError:
+                pass
+
+
+            
+        if event.type == py.KEYDOWN:   #input
+            if event.key == py.K_q :
+                py.quit()
+                sys.exit()
+            if event.key == py.K_1 :
+                key=1
+            if event.key == py.K_2 :
+                key=2
+            if event.key == py.K_3 :
+                key=3
+            if event.key == py.K_4 :
+                key=4
+            if event.key == py.K_5 :
+                key=5
+            if event.key == py.K_6 :
+                key=6
+            if event.key == py.K_7 :
+                key=7
+            if event.key == py.K_8 :
+                key=8
+            if event.key == py.K_9 :
+                key=9
+            if event.key == py.K_DELETE :
+                key=0
+            if event.key == py.K_KP_ENTER:  
+                solverbutton()
+
+            if event.key == py.K_UP and b==1:
+                s=tuple(get_BoxU(s))
+                
+            if event.key == py.K_RIGHT and b==1:
+                s=tuple(get_BoxR(s))
+                
+            if event.key == py.K_LEFT and b==1:
+                s=tuple(get_BoxL(s))
+                
+            if event.key == py.K_DOWN and b==1:
+                s=tuple(get_BoxD(s))
+
+    try :
+        if e :
+            screen.fill((250,150,250))
+            draw_bg(),draw_num()
+            b=1
+    except NameError:
+        pass
+
+    try :
+        if m :
+            screen.fill((150,150,150))
+            draw_bg(),draw_num()
+            b=1
+    except NameError :
+        pass
+    
+    try :
+        if h :
+            screen.fill((250,250,0))
+            draw_bg(),draw_num()
+            b=1
+    except NameError :
+        pass
+
+    try :
+        if solvechk:
+            TIME=None
+            solvebutton()
+    
+    except NameError:
+        pass
+
+    if b==1 :
+            
+            screen.fill((255,165,0))
+            draw_bg();draw_num()
+            giveup=button(py.Color('brown'),660,300,200,80,'give up')
+            giveup.draw(screen)
+            if TIME != None :
+                timed=round(time.time()-starttime)
+                timetext=font1.render("Time: " + format_time(timed),1,(0,0,0))
+                TIME = 1
+            screen.blit(timetext,(680,30))
+            
+            
+    if TIME :
+        timed=round(time.time()-starttime)
+        timetext=font1.render("Time: " + format_time(timed),1,(0,0,0))
+        screen.blit(timetext,(680,30))
+            
+            
+    try :
+        if b==1:
+            if s[0] != False and s[1]!= False :
+                highlight(s)
+                if isValid(grid,s[0]-1,s[1]-1,key) or key==0:
+                    grid_input(s,key)
+                    mixer.music.load('C:/Users/KASYAP/OneDrive/Desktop/SUDOKU Game 2021/beep.mp3')
+                    mixer.music.set_volume(2)
+                    mixer.music.play()
+                    if key==0:
+                        py.draw.rect(screen,(255,165,0),py.Rect(15+((s[1]-1)*70),15+((s[0]-1)*70),70,70))
+
+                    del key
+                else:
+                    popup = font1.render('invalid entry', True, (200,200,200))
+                    popupRect = popup.get_rect()
+                    popupRect.topright = ( screensize[0]-15,200 )
+                    screen.blit(popup, popupRect )
+        
+        
+    except NameError:
+        pass
+
+    draw_num()
+
+    py.display.flip()
+
+#end of game
