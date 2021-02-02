@@ -1,10 +1,3 @@
-# sudokumazaka
-#sudoku game where u can both solve sudokus or ask me to solve them
-# Hello World program in Python
-#                             SAIRAM
-
-
-#SUDOKUGAME    #CSPROJECT2021
 import sys 
 import pygame as py
 import time
@@ -13,10 +6,11 @@ import random
 mixer.init()
 py.init()
 from pygame.locals import *
-screensize= 880,680       #1356,728 full screen resolution approx.
+screensize= 880,680       
 screen = py.display.set_mode((screensize), RESIZABLE )
 py.display.set_caption('Sudoku SOLVER')
 
+# image loadings
 bg1=py.image.load('C:/Users/KASYAP/gamebg1.jpg')
 bg2=py.image.load('C:/Users/KASYAP/gamebg2.jpg')
 bgo=py.image.load('C:/Users/KASYAP/gamebg2.jpg')
@@ -24,6 +18,7 @@ solved=py.image.load('C:/Users/KASYAP/solved.png')
 
 py.font.init()
 font1= py.font.SysFont('Comic Sans MS', 30)
+font2= py.font.SysFont('Comic Sans MS', 15)
 
 grid=[
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -63,6 +58,9 @@ class button():
     def isOver(self, pos):
         if pos[0] > self.x and pos[0] < self.x + self.width:
             if pos[1] > self.y and pos[1] < self.y + self.height:
+                mixer.music.load('C:/Users/KASYAP/OneDrive/Desktop/SUDOKU Game 2021/solved.mp3')
+                mixer.music.set_volume(0.9)
+                mixer.music.play()
                 return True
             
         return False
@@ -81,7 +79,6 @@ def blit_text(surface, text, pos, font, color):
         surface.blit(word_surface, (x, y))
         x += word_width + space
 
-
 def draw_bg():
     py.draw.rect(screen , py.Color('black') , py.Rect(15,15,630,630),10)
     i=1
@@ -90,7 +87,6 @@ def draw_bg():
         py.draw.line(screen,py.Color('black'), py.Vector2(( i*70)+15,15),py.Vector2((i*70)+15,645),line_width)
         py.draw.line(screen,py.Color('black'), py.Vector2(15,( i*70)+15),py.Vector2(645,(i*70)+15),line_width)
         i+=1
-
 def draw_num():
     row=0
     offset=35
@@ -99,16 +95,14 @@ def draw_num():
         while col<9:
             n=grid[row][col]
             if n!=0:
-                num_text=font1.render(str(n), True,py.Color('white'))
+                num_text=font1.render(str(n), True,py.Color('blue'))
                 screen.blit(num_text, py.Vector2((col*70)+offset+6,(row*70)+offset-4))
 
             col+=1
         row+=1
-
 def get_box(pos):
     i=j=15
     a=b=1
-
     while i<595 :
         if i<pos[0]<i+70:
             c=a
@@ -127,27 +121,16 @@ def get_box(pos):
     else:
         return False,False
     return d,c
-
 def highlight(s):
     a=15+((s[1]-1)*70); b= 15+((s[0]-1)*70)
     c=d=70
     py.draw.rect(screen,(255,0,0),py.Rect(a,b,c,d),5)
     return a,b,c,d
-
-
 def grid_input(s,i):
     grid[s[0]-1][s[1]-1]=i
-
-
 def solvebutton():
-    #print('enter button')
-    mixer.music.load('C:/Users/KASYAP/OneDrive/Desktop/SUDOKU Game 2021/solved.mp3')
-    mixer.music.set_volume(0.9)
-    mixer.music.play()
     solveSudoku(grid)
     draw_num()
-
-
 def solveSudoku(grid, i=0, j=0):
         i,j = findNextCellToFill(grid, i, j)
         if i == -1:
@@ -160,7 +143,6 @@ def solveSudoku(grid, i=0, j=0):
                         else:
                             grid[i][j] = 0 # Undo the current cell for backtracking
         return False
-
 def isValid(grid, i, j, e):
         rowOk = all([e != grid[i][x] for x in range(9)])
         if rowOk:
@@ -174,7 +156,6 @@ def isValid(grid, i, j, e):
                                                 return False
                         return True
         return False
-
 def findNextCellToFill(grid, i, j):
         for x in range(i,9):
                 for y in range(j,9):
@@ -185,17 +166,14 @@ def findNextCellToFill(grid, i, j):
                         if grid[x][y] == 0:
                                 return x,y
         return -1,-1
-
 def get_BoxL(s):
     S=[0,0]
     S[0],S[1]=s[0],s[1]-1
     return S
-   
 def get_BoxR(s):
     S=[0,0]
     S[0],S[1]=s[0],s[1]+1
     return S
-    
 def get_BoxU(s):
     S=[0,0]
     S[0],S[1]=s[0]-1,s[1]
@@ -204,10 +182,6 @@ def get_BoxD(s):
     S=[0,0]
     S[0],S[1]=s[0]+1,s[1]
     return S
-
-mixer.music.load('C:/Users/KASYAP/OneDrive/Desktop/SUDOKU Game 2021/bgm1.mp3')
-mixer.music.set_volume(0.7)
-#mixer.music.play(-1)
 
 intial=True
 gameon=False
@@ -258,24 +232,20 @@ while intial :
     except NameError :
         pass
 
-
-
     py.display.flip()
 
-
-
+entnums = font1.render('Input the nums',True,(255,255,255),(255,155,155))
+entnumsRect = entnums.get_rect()
+entnumsRect.topleft = (660,130)
 
 b=0
 while gameon:
     screen.blit(bg2,(0,0))
-    screen.fill((255,255,255))
-    in1='Here,we have a sudoku solver. This takes input and solves the puzzle'
+    screen.fill((155,155,255))
+    in1='Here,we have a sudoku solver. This takes some numbers as input and solves the rest of the puzzle'
     blit_text(screen,in1,(20,400),font1,(0,0,0))
     start=button(py.Color('brown'),(screensize[0]/2)-80,(screensize[1]/2)-80,200,40,'start') #screensize
     start.draw(screen,1)
-
-
-        
 
     for event in py.event.get():
 
@@ -287,7 +257,6 @@ while gameon:
             a=start.isOver( pos)
             #b=1
                      
-            
         if event.type == py.MOUSEBUTTONUP and b==1: #taking and highligting 
             pos= py.mouse.get_pos()
             s=get_box(pos)
@@ -299,8 +268,6 @@ while gameon:
             except NameError:
                 pass
 
-
-            
         if event.type == py.KEYDOWN:   #input
             if event.key == py.K_1 :
                 key=1
@@ -348,6 +315,7 @@ while gameon:
         if a :
             screen.fill((255,165,0))
             draw_bg();draw_num()
+            screen.blit(entnums,entnumsRect)         
             solve=button(py.Color('brown'),660,300,200,80,'solve')
             solve.draw(screen)
             b=1
@@ -366,6 +334,7 @@ while gameon:
                     mixer.music.load('C:/Users/KASYAP/OneDrive/Desktop/SUDOKU Game 2021/beep.mp3')
                     mixer.music.set_volume(0.9)
                     mixer.music.play()
+                    
                     if key==0:
                         py.draw.rect(screen,(255,165,0),py.Rect(15+((s[1]-1)*70),15+((s[0]-1)*70),70,70))
 
@@ -376,16 +345,12 @@ while gameon:
                     popupRect.topright = ( screensize[0]-15,200 )
                     screen.blit(popup, popupRect )
         
-        
     except NameError:
         pass
-
     draw_num()
-
     py.display.flip()
-
+    
 del b
-
 b=0
 
 def getrandind(grid,level):
@@ -418,7 +383,7 @@ def gtcrctvalfrrandind(g,l) :    #isValid(grid, i, j, e):
         e=random.randint(1,9)
         if isValid(g,l[i][0]-1,l[i][1]-1,e):
             g[l[i][0]-1][l[i][1]-1]=e
-
+            
 def format_time(secs):
     sec = secs%60
     minute = secs//60
@@ -437,6 +402,10 @@ def chksolved(grid):
     else:
         return True
 
+atb = font1.render('All the Best',True,(255,255,255),(255,155,155))
+atbRect = atb.get_rect()
+atbRect.topleft = (660,130)
+
 TIME=0
 
 while Gameon:                                       #color, x,y,width,height, text
@@ -450,7 +419,7 @@ while Gameon:                                       #color, x,y,width,height, te
 
     if chksolved(grid):
         Time=None
-        popup = font1.render('congratulatons,press q to quit', True, (200,200,200))
+        popup = font1.render('hoo good,q for quit', True, (200,200,200))
         popupRect = popup.get_rect()
         popupRect.topright = ( screensize[0]-15,200 )
         screen.blit(popup, popupRect)
@@ -464,18 +433,16 @@ while Gameon:                                       #color, x,y,width,height, te
             pos = py.mouse.get_pos()
             e=easy.isOver(pos)
             if e :
-                le=getrandind(grid,'e')
-                gtcrctvalfrrandind(grid,le)
+                l=getrandind(grid,'e')
+                gtcrctvalfrrandind(grid,l)
             m=medium.isOver(pos)
             if m:
-                lm=getrandind(grid,'m')
-                gtcrctvalfrrandind(grid,lm)
+                l=getrandind(grid,'m')
+                gtcrctvalfrrandind(grid,l)
             h=hard.isOver(pos)
             if h :
-                lh=getrandind(grid,'h')
-                gtcrctvalfrrandind(grid,lh)
-
-    
+                l=getrandind(grid,'h')
+                gtcrctvalfrrandind(grid,l)
     
         if event.type == py.MOUSEBUTTONUP and b==1: #taking and highligting 
             pos= py.mouse.get_pos()
@@ -491,8 +458,6 @@ while Gameon:                                       #color, x,y,width,height, te
             except NameError:
                 pass
 
-
-            
         if event.type == py.KEYDOWN:   #input
             if event.key == py.K_q :
                 py.quit()
@@ -537,6 +502,7 @@ while Gameon:                                       #color, x,y,width,height, te
             screen.fill((250,150,250))
             draw_bg(),draw_num()
             b=1
+            
     except NameError:
         pass
 
@@ -568,6 +534,7 @@ while Gameon:                                       #color, x,y,width,height, te
             
             screen.fill((255,165,0))
             draw_bg();draw_num()
+            screen.blit(atb,atbRect)
             giveup=button(py.Color('brown'),660,300,200,80,'give up')
             giveup.draw(screen)
             if TIME != None :
@@ -585,7 +552,7 @@ while Gameon:                                       #color, x,y,width,height, te
             
     try :
         if b==1:
-            if s[0] != False and s[1]!= False :
+            if s[0] != False and s[1]!= False and 1<=s[0]<=9 and 1<=s[1]<=9:
                 highlight(s)
                 if isValid(grid,s[0]-1,s[1]-1,key) or key==0:
                     grid_input(s,key)
@@ -605,9 +572,8 @@ while Gameon:                                       #color, x,y,width,height, te
         
     except NameError:
         pass
-
     draw_num()
-
+    
     py.display.flip()
 
 #end of game
